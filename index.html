@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daisy's Stage — A Play in Three Acts</title>
+  <meta name="description" content="梁爽的个人作品集：一场三幕剧。剧评人的图书馆 · 央视放映厅 · 猫头鹰邮报。" />
+  <link rel="preload" as="image" href="assets/art/curtain-cartoon.jpg" />
+  <link rel="preload" as="image" href="assets/art/stage-cartoon.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+  <script type="module" crossorigin src="/assets/index-wGHemIf5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Vo9HfVpm.css">
+</head>
+<body>
+  <!-- 全局质感层 -->
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <!-- 魔法棒光标 -->
+  <div id="wand" aria-hidden="true">
+    <svg viewBox="0 0 40 40"><path d="M6 34 L26 14" stroke="#c9a86a" stroke-width="3" stroke-linecap="round"/><path d="M24 16 L28 12 M22 12 L28 18 M26 20 L32 14" stroke="#f6e2a8" stroke-width="1.6" stroke-linecap="round"/><circle cx="27" cy="13" r="2.4" fill="#f9efcf"/></svg>
+  </div>
+  <div id="sparkleLayer" aria-hidden="true"></div>
+
+  <!-- ═══ 首屏 ═══ -->
+  <section id="intro" class="intro">
+    <div class="intro-glow" aria-hidden="true"></div>
+    <div class="intro-title-wrap">
+      <svg class="title-arc" viewBox="0 0 600 120" aria-hidden="true">
+        <path id="arcPath" d="M40 100 Q300 -30 560 100" fill="none" stroke="none"/>
+        <circle id="arcComet" r="3.5" fill="#f9efcf" opacity="0"/>
+      </svg>
+      <h1 id="mainTitle" class="main-title" aria-label="Daisy's Stage"></h1>
+      <div class="title-sparkles" id="titleSparkles" aria-hidden="true"></div>
+      <p class="intro-slogan">Life's a play. Trying every role.</p>
+    </div>
+    <p class="intro-zh">梁爽的个人作品集 · 一场三幕剧</p>
+
+    <button id="ticket" class="ticket" aria-label="撕下票根，进入剧场">
+      <span class="t-main">
+        <span class="t-head">ADMIT ONE</span>
+        <span class="t-show">Daisy's Stage</span>
+        <span class="t-cta">— The Show Is About to Begin —</span>
+        <span class="t-meta"><b>SEC</b> A · <b>ROW</b> 1 · <b>SEAT</b> 01 · <b>DATE</b> TONIGHT</span>
+      </span>
+      <span class="t-tear" aria-hidden="true"></span>
+      <span class="t-stub">
+        <span class="t-stub-vert">KEEP THIS STUB</span>
+        <span class="t-no">№ 001207</span>
+      </span>
+    </button>
+    <p class="intro-foot">撕下票根，演出开场 · Tear the stub to enter</p>
+  </section>
+
+  <!-- ═══ 幕布转场（从中间向两边拉开） ═══ -->
+  <div id="curtainOverlay" class="curtain-overlay" hidden>
+    <div class="c-half c-left" aria-hidden="true"></div>
+    <div class="c-half c-right" aria-hidden="true"></div>
+    <div class="c-caption">
+      <span class="c-act" id="cAct"></span>
+      <span class="c-title" id="cTitle"></span>
+      <span class="c-zh" id="cZh"></span>
+    </div>
+  </div>
+
+  <!-- ═══ 剧场 ═══ -->
+  <main id="theater" hidden>
+    <div class="frame" id="frame">
+      <!-- L0 背幕天幕 -->
+      <div class="layer l-backdrop" data-depth="0.35" aria-hidden="true">
+        <img src="assets/art/stage-cartoon.jpg" alt="" />
+      </div>
+
+      <!-- L1 金色飘尘 -->
+      <div class="layer l-dust" id="dust" data-depth="0.6" aria-hidden="true"></div>
+
+      <!-- L2 舞台内容（各幕） -->
+      <div class="layer l-content" data-depth="1">
+        <section class="actscene" id="act-library" hidden></section>
+        <section class="actscene" id="act-onair" hidden></section>
+        <section class="actscene" id="act-post" hidden></section>
+        <section class="actscene" id="act-finale" hidden></section>
+      </div>
+
+      <!-- 幕名牌 -->
+      <div class="act-sign" id="actSign">
+        <span class="as-num" id="asNum"></span>
+        <span class="as-title" id="asTitle"></span>
+      </div>
+
+      <!-- 金绳拉绳 -->
+      <button id="rope" class="rope" aria-label="拉动金绳，进入下一幕">
+        <span class="rope-hint hand" id="ropeHint">Pull for the next act</span>
+      </button>
+
+      <!-- 节目单 -->
+      <nav class="playbill" id="playbill" aria-label="节目单">
+        <div class="pb-head hand">Tonight's Program</div>
+        <ol class="pb-list" id="pbList"></ol>
+      </nav>
+    </div>
+  </main>
+
+  <!-- 详情弹层（羊皮纸卡片） -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-card" id="modalCard"></div>
+  </div>
+
+  <!-- 移动端竖屏版（JS 渲染） -->
+  <div id="mobile" class="mobile"></div>
+
+</body>
+</html>
