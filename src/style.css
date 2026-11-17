@@ -1029,3 +1029,17 @@ a.sub-link:hover { background: rgba(201, 168, 106, .25); text-decoration: none; 
   .mb-finale a { color: #f6e2a8; }
   .mb-foot { font-size: .7rem !important; color: rgba(244, 236, 216, .45) !important; margin-top: 1.6em !important; line-height: 1.7; }
 }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  html, body { height:auto; min-height:100%; overflow-y:auto; }
+  #mobile { overflow-wrap:anywhere; }
+  #mobile .mb-hero { padding:clamp(2.3rem,8vh,4.5rem) 1rem 1.2rem; }
+  #mobile .mb-title { font-size:clamp(2.8rem,14vw,5rem); }
+  #mobile .mb-nav { display:grid; gap:.55rem; max-width:24rem; margin:1.35rem auto 0; }
+  #mobile .mb-nav a { display:flex; align-items:center; justify-content:center; min-height:44px; padding:.5rem; border:1px solid #9c8054; border-radius:.4rem; color:#f6e2a8; text-decoration:none; }
+  #mobile .mb-act { scroll-margin-top:1rem; }
+  #mobile .mb-card p { font-size:.9rem; }
+  #mobile .mb-strip, #mobile .mb-links a, #mobile .mb-repos a { min-height:44px; }
+  #mobile .mb-links a { display:inline-flex; align-items:center; }
+  #mobile a:focus-visible { outline:2px solid #f6e2a8; outline-offset:2px; }
+}
