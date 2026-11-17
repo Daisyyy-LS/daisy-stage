@@ -569,10 +569,10 @@ document.addEventListener('keydown', (e) => {
       <h1 class="mb-title">Daisy's Stage</h1>
       <p class="mb-slogan">${esc(profile.slogan)}</p>
       <p class="mb-name">${esc(profile.name)} · ${esc(profile.nameEn)}</p>
-      <p class="mb-hint">一场三幕剧 · 向下滚动开场 ↓</p>
+      <nav class="mb-nav" aria-label="作品目录"><a href="#mb-library">剧评与短视频</a><a href="#mb-screening">央视放映厅</a><a href="#mb-owl">AI 与海外内容</a></nav>
     </header>
 
-    <section class="mb-act">
+    <section class="mb-act" id="mb-library">
       <div class="mb-acthead"><span>Act I</span><h2>The Critic's Library<em>剧评人的图书馆</em></h2></div>
       <a class="mb-strip" href="${xhsStats.url}" target="_blank" rel="noopener">
         小红书 · 粉丝 ${esc(xhsStats.fans)} · 获赞 ${esc(xhsStats.likes)} —— 访问主页 →
@@ -584,12 +584,12 @@ document.addEventListener('keydown', (e) => {
       <div class="mb-scroll">${douyin.videos.map(dyCard).join('')}</div>
     </section>
 
-    <section class="mb-act">
+    <section class="mb-act" id="mb-screening">
       <div class="mb-acthead"><span>Act II</span><h2>Now Showing<em>央视放映厅</em></h2></div>
       ${cctvWorks.map(cctvCard).join('')}
     </section>
 
-    <section class="mb-act">
+    <section class="mb-act" id="mb-owl">
       <div class="mb-acthead"><span>Act III</span><h2>Owl Post<em>猫头鹰邮报</em></h2></div>
       <a class="mb-card mb-profile" href="${xProfile.url}" target="_blank" rel="noopener">
         <img src="assets/phone/profile.png" alt="X profile" loading="lazy" />
@@ -616,6 +616,6 @@ document.addEventListener('keydown', (e) => {
       <p>WeChat · ${esc(profile.wechat)}</p>
       <p><a href="${profile.github}" target="_blank" rel="noopener">GitHub · Daisyyy-LS →</a></p>
       <p class="mb-foot">${esc(profile.footerLine)}</p>
-      <p class="mb-foot">横屏或桌面端打开，可体验完整剧场交互版。</p>
+      <p class="mb-foot">桌面端可体验互动剧场交互版。</p>
     </footer>`;
 })();
