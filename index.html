@@ -11,8 +11,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" /></noscript>
-  <script type="module" crossorigin src="/assets/index-wGHemIf5.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Vo9HfVpm.css">
+  <script type="module" crossorigin src="./assets/index-wGHemIf5.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Vo9HfVpm.css">
+<style>
+@media (max-width: 760px) and (orientation: portrait) {
+  html, body { height:auto; min-height:100%; overflow-y:auto; }
+  #mobile { overflow-wrap:anywhere; }
+  #mobile .mb-hero { padding:clamp(2.3rem,8vh,4.5rem) 1rem 1.2rem; }
+  #mobile .mb-title { font-size:clamp(2.8rem,14vw,5rem); }
+  #mobile .mb-nav { display:grid; gap:.55rem; max-width:24rem; margin:1.35rem auto 0; }
+  #mobile .mb-nav a { display:flex; align-items:center; justify-content:center; min-height:44px; padding:.5rem; border:1px solid #9c8054; border-radius:.4rem; color:#f6e2a8; text-decoration:none; }
+  #mobile .mb-act { scroll-margin-top:1rem; }
+  #mobile .mb-card p { font-size:.9rem; }
+  #mobile .mb-strip, #mobile .mb-links a, #mobile .mb-repos a { min-height:44px; }
+  #mobile .mb-links a { display:inline-flex; align-items:center; }
+  #mobile a:focus-visible { outline:2px solid #f6e2a8; outline-offset:2px; }
+}
+</style>
 </head>
 <body>
   <!-- 全局质感层 -->
@@ -113,5 +128,29 @@
   <!-- 移动端竖屏版（JS 渲染） -->
   <div id="mobile" class="mobile"></div>
 
+<script type="module">
+const mobile = document.querySelector('#mobile');
+const addDirectory = () => {
+  const acts = mobile.querySelectorAll('.mb-act');
+  const hint = mobile.querySelector('.mb-hint');
+  if (acts.length !== 3 || !hint) return;
+  const nav = document.createElement('nav');
+  nav.className = 'mb-nav';
+  nav.setAttribute('aria-label', '作品目录');
+  ['剧评与短视频', '央视放映厅', 'AI 与海外内容'].forEach((label, index) => {
+    const id = ['mb-library', 'mb-screening', 'mb-owl'][index];
+    acts[index].id = id;
+    const link = document.createElement('a');
+    link.href = '#' + id;
+    link.textContent = label;
+    nav.append(link);
+  });
+  hint.replaceWith(nav);
+  observer.disconnect();
+};
+const observer = new MutationObserver(addDirectory);
+observer.observe(mobile, { childList: true });
+addDirectory();
+</script>
 </body>
 </html>
