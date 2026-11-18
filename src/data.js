@@ -41,6 +41,36 @@ export const xhsNotes = [
 
 export const xhsStats = { fans: '1000+', likes: '6 万+', url: 'https://xhslink.cn/o/7U0EgDUiywn' };
 
+// 第一幕竖版「剧评人手记」面板：定位与内容的文艺化简介
+export const xhsIntro = {
+  name: 'Daisyyy',
+  handle: '小红书 · 剧评与光影',
+  role: '戏剧电影爱好者 · 前记者',
+  lines: [
+    '以笔为票，出入剧场',
+    '写剧评，也记光影',
+    '从新闻理想到舞台侧幕',
+    '把每一次感动，留在文字里'
+  ],
+  topics: '剧评 · 影评 · 戏剧 · 校园',
+  foot: '粉丝 1000+ · 获赞 6 万+'
+};
+
+// 抖音竖版「镜框手记」面板：仿小红书面板的文艺简介（头像待用户提供后替换 sp-photo 内容）
+export const douyinIntro = {
+  name: 'Daisyyy',
+  handle: '抖音 · 走进剧场有梦做',
+  role: '剧场记录者 · 舞剧爱好者',
+  lines: [
+    '谢幕的一分钟，最值得被记住',
+    '用镜头收藏舞台上的光',
+    '从北京首演到排练侧幕',
+    '让每一次鼓掌，都有回声'
+  ],
+  topics: '舞剧 · 谢幕 · 剧场 · 现场',
+  foot: '合集 21 集 · 播放 1871.9 万+'
+};
+
 // ── 第一幕侧翼：抖音灯箱 ──────────────────────────
 export const douyin = {
   collection: { name: '走进剧场有梦做', plays: '1871.9 万', episodes: 21, url: 'https://www.douyin.com/user/MS4wLjABAAAA6mOfiVRLonbngn1adypqrWQ7pg1GtGFgihqUMH8JsS1SEQmtUzIklBn3EpWi_HQ7' },
