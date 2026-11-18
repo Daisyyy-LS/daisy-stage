@@ -21,6 +21,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+/* 键盘焦点可见：卡片/按钮/链接 Tab 选中时给出金色描边 */
+:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; border-radius: 2px; }
+
 html, body {
   height: 100%;
   background: var(--coal);
