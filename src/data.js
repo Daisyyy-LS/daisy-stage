@@ -1,8 +1,8 @@
-// Daisyyy's Screening Room — 全部内容数据
-// 与 content/*.json 同步，修改请两边一起改
+// Daisy's Stage — 全站内容数据（唯一数据源）
+// 桌面端与移动端均从本文件读取，修改内容只需改这里
 
 export const profile = {
-  siteName: "Daisyyy's Screening Room",
+  siteName: "Daisy's Stage",
   siteSub: "A Play in Three Acts",
   slogan: "Life's a play. Trying every role.",
   name: "梁爽",
@@ -13,10 +13,12 @@ export const profile = {
   footerLine: "做过记者，写过剧评，现在做 AI 产品。这个页面是我用 Vibe Coding 做的。"
 };
 
+// 幕信息与 main.js 的渲染一一对应：el 是舞台容器，pb 是节目单文案
 export const acts = [
-  { id: 'stage', num: 'I', title: 'The Stage', zh: '剧场', hint: '我写剧评，也跳舞' },
-  { id: 'onair', num: 'II', title: 'On Air', zh: '演播室', hint: '我在央视做节目' },
-  { id: 'inhand', num: 'III', title: 'In Hand', zh: '掌上', hint: 'Build in public' }
+  { id: 'library', el: '#act-library', numeral: 'I', num: 'Act I', title: "The Critic's Library", zh: '剧评人的图书馆', pb: 'The Library · 剧评与舞', hint: '我写剧评，也跳舞' },
+  { id: 'onair', el: '#act-onair', numeral: 'II', num: 'Act II', title: 'Now Showing', zh: '央视放映厅', pb: 'Now Showing · 央视', hint: '我在央视做节目' },
+  { id: 'post', el: '#act-post', numeral: 'III', num: 'Act III', title: 'Owl Post', zh: '猫头鹰邮报', pb: 'Owl Post · 掌心', hint: 'Build in public' },
+  { id: 'finale', el: '#act-finale', numeral: 'IV', num: 'Curtain Call', title: 'Curtain Call', zh: '谢幕', pb: 'Curtain Call · 谢幕', hint: '演出永不落幕' }
 ];
 
 // ── 第一幕：小红书笔记（海报墙）────────────────────
