@@ -7,14 +7,13 @@
   <meta name="description" content="梁爽的个人作品集：一场三幕剧。剧评人的图书馆 · 央视放映厅 · 猫头鹰邮报。" />
   <meta name="theme-color" content="#17100c" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2317100c'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-style='italic' font-size='46' fill='%23c9a86a' text-anchor='middle'%3ED%3C/text%3E%3Ccircle cx='50' cy='15' r='3' fill='%23f6e2a8'/%3E%3C/svg%3E" />
-  <link rel="preload" as="image" href="assets/art/curtain-cartoon.jpg" />
   <link rel="preload" as="image" href="assets/art/stage-cartoon.jpg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Caveat:wght@500;700&family=Space+Grotesk:wght@400;500&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" /></noscript>
-  <script type="module" crossorigin src="./assets/index-DjDTPUX8.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CAR3mU1g.css">
+  <!-- 字体本地化：零外网延迟，首屏字形一次到位，不再 fallback→花体跳变 -->
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/great-vibes-latin-400-normal.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/caveat-latin-500-normal.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/playfair-display-latin-700-normal.woff2" crossorigin />
+  <script type="module" crossorigin src="./assets/index--MJDkh1h.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BYTRBa6V.css">
 </head>
 <body>
   <!-- 全局质感层 -->
@@ -23,7 +22,7 @@
 
   <!-- 魔法棒光标 -->
   <div id="wand" aria-hidden="true">
-    <svg viewBox="0 0 40 40"><path d="M6 34 L26 14" stroke="#c9a86a" stroke-width="3" stroke-linecap="round"/><path d="M24 16 L28 12 M22 12 L28 18 M26 20 L32 14" stroke="#f6e2a8" stroke-width="1.6" stroke-linecap="round"/><circle cx="27" cy="13" r="2.4" fill="#f9efcf"/></svg>
+    <svg viewBox="0 0 40 40"><path d="M33 31 L12 11" stroke="#c9a86a" stroke-width="3" stroke-linecap="round"/><path d="M12 7 L12 3 M12 15 L12 19 M8 11 L4 11 M16 11 L20 11 M9.5 8.5 L7 6 M14.5 13.5 L17 16" stroke="#f6e2a8" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="11" r="2.8" fill="#f9efcf"/></svg>
   </div>
   <div id="sparkleLayer" aria-hidden="true"></div>
 
@@ -57,10 +56,20 @@
     <p class="intro-foot">撕下票根，演出开场 · Tear the stub to enter</p>
   </section>
 
-  <!-- ═══ 幕布转场（从中间向两边拉开） ═══ -->
+  <!-- ═══ 幕布转场：舞台边框固定，两片同源天鹅绒幕布受绳牵引开合 ═══ -->
   <div id="curtainOverlay" class="curtain-overlay" hidden>
-    <div class="c-half c-left" aria-hidden="true"></div>
-    <div class="c-half c-right" aria-hidden="true"></div>
+    <!-- 固定舞台：拱门立柱 + 顶部花饰全程不动，与剧场背景同源 -->
+    <div class="c-stage" aria-hidden="true"></div>
+    <!-- 台口：两片真实幕布只在此开口内左右开合 -->
+    <div class="c-opening" aria-hidden="true">
+      <div class="c-curtain c-cl"><span class="c-cloth"></span><span class="c-edge"></span></div>
+      <div class="c-curtain c-cr"><span class="c-cloth"></span><span class="c-edge"></span></div>
+      <!-- 顶部垂幔流苏：固定在台口上沿，遮住帘幕顶缝，增强一体感 -->
+      <div class="c-valance"></div>
+    </div>
+    <!-- 牵引金绳（合拢/拉开时从两侧垂下轻摆） -->
+    <div class="c-pull c-pull-l" aria-hidden="true"><span></span></div>
+    <div class="c-pull c-pull-r" aria-hidden="true"><span></span></div>
     <div class="c-caption">
       <span class="c-act" id="cAct"></span>
       <span class="c-title" id="cTitle"></span>
@@ -93,9 +102,12 @@
         <span class="as-title" id="asTitle"></span>
       </div>
 
-      <!-- 金绳拉绳 -->
+      <!-- 金绳拉绳：从舞台背景原图抠出的真实束绳（绳结 + 流苏），保留微光与文字指引 -->
       <button id="rope" class="rope" aria-label="拉动金绳，进入下一幕">
+        <span class="rope-glow" aria-hidden="true"></span>
+        <img class="rope-art" src="assets/rope/curtain-tieback.png" alt="" aria-hidden="true" />
         <span class="rope-hint hand" id="ropeHint">Pull for the next act</span>
+        <span class="rope-lock hand" id="ropeLock">先看完这一幕 · 再赴下一场</span>
       </button>
 
       <!-- 节目单 -->
