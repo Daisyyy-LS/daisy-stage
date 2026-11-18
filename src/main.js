@@ -1,5 +1,5 @@
 import './style.css';
-import { profile, acts, xhsNotes, xhsStats, douyin, cctvWorks, xProfile, coaligne, tweets, repos } from './data.js';
+import { profile, acts, xhsNotes, xhsStats, xhsIntro, douyin, douyinIntro, cctvWorks, xProfile, coaligne, tweets, repos } from './data.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -33,7 +33,8 @@ if (isFine) {
     const dx = e.clientX - px, dy = e.clientY - py;
     px = e.clientX; py = e.clientY;
     const angle = Math.max(-30, Math.min(30, dx * 1.2));
-    wand.style.transform = `translate(${px - 6}px, ${py - 30}px) rotate(${-8 + angle * 0.4}deg)`;
+    // 发光头位于精灵图 (12,11)，把手绘旋转中心放在头上，尾随鼠标速度轻摆
+    wand.style.transform = `translate(${px - 12}px, ${py - 11}px) rotate(${angle * 0.5}deg)`;
     const now = performance.now();
     if (now - lastTrail > 46 && (Math.abs(dx) + Math.abs(dy) > 3)) {
       lastTrail = now;
@@ -46,6 +47,21 @@ if (isFine) {
       setTimeout(() => s.remove(), 750);
     }
   }, { passive: true });
+}
+
+/* ═══ 字体就绪检测 ═══════════════════════════
+   花体字已本地化（@font-face + preload），随站点一起加载，
+   不再走 Google Fonts 外网往返。document.fonts.ready 通常在
+   首帧前即完成；保留 1.2s 兜底仅为兼容极慢设备，避免首屏空等。 */
+function fontsReady() {
+  if (!document.fonts || !document.fonts.ready) return Promise.resolve();
+  const cap = new Promise((r) => setTimeout(r, 1200));
+  const load = Promise.allSettled([
+    document.fonts.load("400 1em 'Great Vibes'"),
+    document.fonts.load("500 1em 'Caveat'"),
+    document.fonts.load("700 1em 'Playfair Display'"),
+  ]).then(() => document.fonts.ready);
+  return Promise.race([load, cap]);
 }
 
 /* ═══ 首屏：手写标题 + 细闪 + 彗星弧 ═══════ */
@@ -70,6 +86,8 @@ if (isFine) {
   const writeNext = () => {
     if (i >= chars.length) {
       tip.style.opacity = '0';
+      // 写字动画结束后清除 clip-path：残留的裁剪框与 background-clip:text 叠加会产生矩形底色块
+      chars.forEach((c) => { c.classList.remove('written'); c.classList.add('done'); });
       startSparkles();
       return;
     }
@@ -84,7 +102,11 @@ if (isFine) {
     i++;
     setTimeout(writeNext, 105);
   };
-  setTimeout(writeNext, 700);
+  // 等字体到位后再启动书写 + 放开副标题/中文/戏票的淡入动画，消除字形跳变
+  fontsReady().then(() => {
+    $('#intro').classList.add('typo-ready');
+    setTimeout(writeNext, 160);
+  });
 
   function startSparkles() {
     const box = $('#titleSparkles');
@@ -122,42 +144,39 @@ if (isFine) {
 const overlay = $('#curtainOverlay');
 let overlayBusy = false;
 
-function curtainSet(state) {
-  // state: 'closed'（合拢覆盖）| 'opening'（向两边拉开）
-  overlay.classList.toggle('opening', state === 'opening');
-}
-
 async function curtainCycle(caption, midway) {
   if (overlayBusy) return;
   overlayBusy = true;
+  const curtains = $$('.c-curtain');
   try {
-    // 1. 幕布合拢（瞬间覆盖 → 滑入）
     $('#cAct').textContent = caption[0];
     $('#cTitle').textContent = caption[1];
     $('#cZh').textContent = caption[2] || '';
     overlay.hidden = false;
-    overlay.classList.remove('opening', 'show-caption');
-    const halves = $$('.c-half');
-    halves.forEach((h) => { h.style.transition = 'none'; h.style.transform = ''; });
-    overlay.classList.add('opening'); // 先处于拉开状态（屏幕外）
-    await sleep(30);
-    halves.forEach((h) => { h.style.transition = ''; h.style.transform = ''; });
-    overlay.classList.remove('opening'); // 滑回合拢
-    await sleep(1150);
-    overlay.classList.add('show-caption');
-    await sleep(1000);
-    midway && midway();
-    await sleep(350);
-    // 2. 拉开
     overlay.classList.remove('show-caption');
+    // 幕布先处于拉开态（无过渡），再瞬时合拢盖住画面
+    curtains.forEach((c) => { c.style.transition = 'none'; });
     overlay.classList.add('opening');
-    await sleep(1250);
+    void overlay.offsetWidth; // 强制重排，确保拉开态生效
+    curtains.forEach((c) => { c.style.transition = ''; });
+    overlay.classList.add('pulling'); // 牵引金绳随幕布落下轻摆
+    overlay.classList.remove('opening'); // 合拢
+    await sleep(1400);
+    overlay.classList.remove('pulling');
+    overlay.classList.add('show-caption');
+    await sleep(900);
+    if (midway) await midway();       // 幕布合着时切换场景，避免露出旧画面
+    await sleep(300);
+    overlay.classList.remove('show-caption');
+    overlay.classList.add('pulling'); // 拉开时金绳再摆一次
+    overlay.classList.add('opening'); // 拉开
+    await sleep(1400);
     overlay.hidden = true;
-    overlay.classList.remove('opening');
+    overlay.classList.remove('opening', 'pulling');
   } finally {
-    // 中途任一步抛错也要收起幕布并解锁，否则 overlayBusy 永久为 true，整页无法再交互
+    // 任一步抛错也要收起幕布并解锁，否则整页无法再交互
     overlay.hidden = true;
-    overlay.classList.remove('opening', 'show-caption');
+    overlay.classList.remove('opening', 'show-caption', 'pulling');
     overlayBusy = false;
   }
 }
@@ -166,12 +185,17 @@ $('#ticket').addEventListener('click', async () => {
   const t = $('#ticket');
   if (t.classList.contains('torn')) return;
   t.classList.add('torn');
-  await sleep(650);
-  const theater = $('#theater');
-  theater.hidden = false;
-  switchAct(0); // 直接铺好第一幕
-  await curtainCycle(['Tonight', "Daisy's Stage", '演出开始'], null);
-  $('#intro').classList.add('away');
+  await sleep(720); // 等副券撕离动画
+  // 幕布合拢盖住画面后，在 midway 里静默切换到剧场并铺好第一幕，再拉开——全程不闪回首屏
+  await curtainCycle(
+    ['Tonight', "Daisy's Stage", '演出开始'],
+    async () => {
+      $('#theater').hidden = false;
+      $('#intro').classList.add('away');
+      switchAct(0);
+      await sleep(250);
+    }
+  );
 });
 
 /* ═══ 多层视差 ═══════════════════════════ */
@@ -219,7 +243,7 @@ if (isFine) {
 const pbList = $('#pbList');
 ACTS.forEach((a, i) => {
   const li = document.createElement('li');
-  li.innerHTML = `<button><span class="pnum">${a.numeral}.</span><span>${a.pb}</span><span class="stamp">已检</span></button>`;
+  li.innerHTML = `<button><span class="pnum">${a.numeral}.</span><span>${a.pb}</span></button>`;
   li.querySelector('button').addEventListener('click', () => goAct(i));
   pbList.appendChild(li);
 });
@@ -246,6 +270,19 @@ function switchAct(i) {
   if (i === 1) buildOnair();
   if (i === 2) buildPost();
   if (i === 3) buildFinale();
+  updateRope();
+}
+
+// 第一幕需看完全部场次才点亮拉绳；其余幕可直接进入下一幕
+function updateRope() {
+  const rope = $('#rope');
+  if (!rope) return;
+  const ready = actIndex !== 0 || scenesSeen.size >= SCENES.length;
+  rope.classList.toggle('ready', ready);
+  rope.classList.toggle('locked', !ready);
+  rope.setAttribute('aria-label', ready ? '拉动金绳，进入下一幕' : '请先看完本幕所有场次');
+  const hint = $('#ropeHint');
+  if (hint) hint.textContent = actIndex === ACTS.length - 1 ? 'Encore · 回到第一幕' : 'Pull for the next act';
 }
 
 async function goAct(i) {
@@ -254,11 +291,22 @@ async function goAct(i) {
   await curtainCycle([a.num, a.title, a.zh], () => switchAct(i));
 }
 
-$('#rope').addEventListener('click', () => {
+$('#rope').addEventListener('click', async () => {
   if (overlayBusy || actIndex < 0) return;
-  $('#rope').classList.remove('pulling');
-  void $('#rope').offsetWidth;
-  $('#rope').classList.add('pulling');
+  const rope = $('#rope');
+  if (!rope.classList.contains('ready')) {
+    // 未看完本幕：绳子轻晃一下并提示，不切幕
+    rope.classList.remove('nudge');
+    void rope.offsetWidth;
+    rope.classList.add('nudge');
+    return;
+  }
+  // 先拉绳：下拉 → 回弹，再幕布合拢换幕
+  rope.classList.remove('pulling');
+  void rope.offsetWidth;
+  rope.classList.add('pulling');
+  await sleep(560);
+  rope.classList.remove('pulling');
   goAct((actIndex + 1) % ACTS.length);
 });
 
@@ -269,6 +317,7 @@ const SCENES = [
   { key: 'dance', label: '侧台之舞', en: 'Scene 3 · Dance', cats: [], screen: 'douyin' }
 ];
 let sceneIndex = 0;
+const scenesSeen = new Set([0]); // 第一幕已浏览的场次，全部看完才解锁下一幕拉绳
 
 const PARCH_POS_1 = [
   { l: 30.5, t: 24, r: -3 }, { l: 41, t: 23, r: 2 }, { l: 51.5, t: 25, r: -1.5 }, { l: 62, t: 23, r: 3 },
@@ -296,13 +345,19 @@ function posAt(positions, k, label) {
 
 function subtitleCols(scene) {
   if (scene.screen === 'douyin') {
+    // 抖音也用竖版镜框手记面板，与小红书一致（头像待用户提供后替换）
     return {
-      cols: ['抖音 · 走进剧场有梦做', `合集 ${douyin.collection.episodes} 集 · ${douyin.collection.plays} 播放`, '演员鞠躬 观众鼓掌'],
+      kind: 'profile',
+      intro: douyinIntro,
+      platform: 'douyin',
       link: { text: '抖音主页 →', url: douyin.collection.url }
     };
   }
+  // 竖版「剧评人手记」：复古相框头像 + 文艺简介，替代原先杂乱的三列堆字
   return {
-    cols: ['小红书 · 剧评与光影', `粉丝 ${xhsStats.fans} · 获赞 ${xhsStats.likes}`, '戏剧 电影 新闻理想'],
+    kind: 'profile',
+    intro: xhsIntro,
+    platform: 'xhs',
     link: { text: '小红书主页 →', url: xhsStats.url }
   };
 }
@@ -326,6 +381,8 @@ function switchScene(dir) {
   // 立即累加目标（连续点击可正确跳多场），并清掉上一次未落地的定时器，避免竞态
   const target = (sceneIndex + dir + SCENES.length) % SCENES.length;
   sceneIndex = target;
+  scenesSeen.add(target);
+  updateRope();
   const zone = $('#parchZone');
   $$('.parchment, .goldframe', zone).forEach((el) => el.classList.add('flyout'));
   clearTimeout(sceneTimer);
@@ -339,9 +396,47 @@ function renderScene(i, first) {
   $('#ssLabel').innerHTML = `<i>${scene.en}</i>${scene.label}`;
   // 字幕屏
   const sc = subtitleCols(scene);
-  $('#subScreen').innerHTML =
-    sc.cols.map((t, k) => `<span class="sub-col ${['a', 'b', 'c'][k]}">${t}</span>`).join('') +
-    `<a class="sub-link" href="${sc.link.url}" target="_blank" rel="noopener">${sc.link.text}</a>`;
+  const sub = $('#subScreen');
+  if (sc.kind === 'profile') {
+    const it = sc.intro;
+    const isDy = sc.platform === 'douyin';
+    // 用户头像待提供：拿到后把下面 <svg> 换成 <img src="assets/...头像.jpg"> 即可
+    const glyph = isDy
+      ? `<path d="M58 26 v34 a11 11 0 1 1 -7 -10 v-19 l-16 4 v26 a11 11 0 1 1 -7 -10 v-33 z" fill="url(#spGold)" />`
+      : `<text x="50" y="57" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="40" fill="url(#spGold)">D</text>`;
+    sub.classList.add('is-profile');
+    sub.innerHTML = `
+      <div class="sp-frame">
+        <div class="sp-photo">
+          <svg viewBox="0 0 100 100" aria-label="${it.name} 头像">
+            <defs>
+              <radialGradient id="spBg" cx="38%" cy="30%" r="80%">
+                <stop offset="0" stop-color="#4a3320" />
+                <stop offset="1" stop-color="#1a1008" />
+              </radialGradient>
+              <linearGradient id="spGold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f7e6b4" />
+                <stop offset="1" stop-color="#b8913f" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" fill="url(#spBg)" />
+            <circle cx="50" cy="39" r="19" fill="none" stroke="url(#spGold)" stroke-width="1.2" opacity=".7" />
+            ${glyph}
+            <text x="50" y="80" text-anchor="middle" font-family="Georgia, serif" font-size="9" letter-spacing="2" fill="#c9a86a">DAISYYY</text>
+            <path d="M30 88 Q50 96 70 88" fill="none" stroke="url(#spGold)" stroke-width=".8" opacity=".6" />
+          </svg>
+        </div>
+      </div>
+      <div class="sp-handle">${it.handle}</div>
+      <div class="sp-rule"></div>
+      <div class="sp-verses">${it.lines.map((l) => `<span>${l}</span>`).join('')}</div>
+      <div class="sp-topics">${it.topics}</div>`;
+  } else {
+    sub.classList.remove('is-profile');
+    sub.innerHTML =
+      sc.cols.map((t, k) => `<span class="sub-col ${['a', 'b', 'c'][k]}">${t}</span>`).join('');
+  }
+  sub.insertAdjacentHTML('beforeend', `<a class="sub-link" href="${sc.link.url}" target="_blank" rel="noopener">${sc.link.text}</a>`);
   // 内容
   zone.innerHTML = '';
   if (scene.key === 'dance') {
@@ -361,12 +456,17 @@ function renderScene(i, first) {
         <a class="mc-link" href="${v.url}" target="_blank" rel="noopener"><span>去抖音看 ↗</span></a>`));
       zone.appendChild(el);
     });
-    // 合集引言羊皮条
+    // 合集引言羊皮条：完整文案 + 可点击弹层（原先被 .78cqw 挤到截断且无法点开）
     const q = document.createElement('div');
-    q.className = 'parchment';
-    q.style.left = '42%'; q.style.top = '66%'; q.style.width = '13cqw';
+    q.className = 'parchment quote-card';
+    q.style.left = '38%'; q.style.top = '64%'; q.style.width = '19cqw';
     q.style.transform = 'rotate(-1.5deg)';
-    q.innerHTML = `<span class="p-title" style="font-size:.78cqw;padding:.4cqw .3cqw">「${douyin.description}」—— 这句话也是我小红书剧评的题跋</span>`;
+    q.innerHTML = `<span class="p-seal">D</span><span class="p-quote">${douyin.description}</span><span class="p-quote-cta">展开题跋 ↗</span>`;
+    onActivate(q, () => openModal(`
+      <span class="mc-no"><span>Programme Note · 题跋</span><span>走进剧场有梦做</span></span>
+      <h3 class="mc-title" style="font-size:1.15rem">${douyin.description}</h3>
+      <p class="mc-excerpt">这句话也是我小红书剧评的题跋。演员鞠躬，观众鼓掌——剧场把 120 分钟借给我们，我们把其中的震动写进文字、拍进镜头，再交还给它。愿每一次谢幕，都值得被记住。</p>
+      <a class="mc-link" href="${douyin.collection.url}" target="_blank" rel="noopener"><span>去抖音看完整合集 ↗</span></a>`));
     zone.appendChild(q);
   } else {
     const notes = xhsNotes.filter((n) => scene.cats.includes(n.cat));
@@ -625,6 +725,15 @@ document.addEventListener('keydown', (e) => {
 
     <section class="mb-act" id="mb-library">
       <div class="mb-acthead"><span>Act I</span><h2>The Critic's Library<em>剧评人的图书馆</em></h2></div>
+      <div class="mb-xhs-intro">
+        <div class="mb-xhs-badge">D</div>
+        <div>
+          <h4>${esc(xhsIntro.handle)}</h4>
+          <p class="mb-xhs-role">${esc(xhsIntro.role)}</p>
+          <p>${xhsIntro.lines.map(esc).join(' · ')}</p>
+          <span class="mb-cat">${esc(xhsIntro.topics)} · ${esc(xhsIntro.foot)}</span>
+        </div>
+      </div>
       <a class="mb-strip" href="${xhsStats.url}" target="_blank" rel="noopener">
         小红书 · 粉丝 ${esc(xhsStats.fans)} · 获赞 ${esc(xhsStats.likes)} —— 访问主页 →
       </a>
