@@ -3,6 +3,17 @@
    复古奇幻剧场 · 三幕剧 · 多层视差
    ═══════════════════════════════════════════════════ */
 
+/* 本地花体字体：随站点分发，零外网往返，字形一次到位不跳变 */
+@font-face { font-family: 'Great Vibes'; src: url('/assets/fonts/great-vibes-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'Caveat'; src: url('/assets/fonts/caveat-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-display: block; }
+@font-face { font-family: 'Caveat'; src: url('/assets/fonts/caveat-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Playfair Display'; src: url('/assets/fonts/playfair-display-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'Playfair Display'; src: url('/assets/fonts/playfair-display-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'Playfair Display'; src: url('/assets/fonts/playfair-display-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'Playfair Display'; src: url('/assets/fonts/playfair-display-latin-700-italic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'Space Grotesk'; src: url('/assets/fonts/space-grotesk-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Space Grotesk'; src: url('/assets/fonts/space-grotesk-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+
 :root {
   --ink: #17100c;
   --coal: #0a0705;
@@ -57,7 +68,8 @@ a:hover { text-decoration: underline; }
   position: fixed; left: 0; top: 0; z-index: 200;
   width: 40px; height: 40px;
   pointer-events: none;
-  transform: translate(-100px, -100px) rotate(-8deg);
+  transform: translate(-100px, -100px);
+  transform-origin: 12px 11px; /* 旋转中心 = 发光头，头贴鼠标、尾摆向右下 */
   filter: drop-shadow(0 0 6px rgba(246, 226, 168, .6));
   transition: transform .06s linear;
   display: none;
@@ -88,6 +100,11 @@ a:hover { text-decoration: underline; }
   transition: opacity .6s ease;
 }
 .intro.away { opacity: 0; pointer-events: none; }
+/* 字体就绪前不播放首屏文案动画，避免 fallback → 花体的闪现跳变 */
+.intro:not(.typo-ready) .intro-slogan,
+.intro:not(.typo-ready) .intro-zh,
+.intro:not(.typo-ready) .ticket,
+.intro:not(.typo-ready) .intro-foot { animation: none; opacity: 0; }
 .intro-glow {
   position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse 30% 22% at 50% 40%, rgba(246, 226, 168, .08), transparent 70%);
@@ -104,6 +121,8 @@ a:hover { text-decoration: underline; }
   padding: 0 .3em;
   display: inline-block;
   animation: titleFloat 6s ease-in-out infinite 3.2s;
+  /* 发光作用于整个标题一次；逐字加 filter 会让 background-clip:text 渲染成字符盒子矩形 */
+  filter: drop-shadow(0 2px 12px rgba(201, 168, 106, .38));
 }
 @keyframes titleFloat {
   0%, 100% { transform: translateY(0) }
@@ -111,20 +130,22 @@ a:hover { text-decoration: underline; }
 }
 .main-title .ch {
   display: inline-block;
+  color: var(--gold-hi);
   background: linear-gradient(175deg, #f9efcf 15%, var(--gold) 55%, var(--gold-lo) 90%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 10px rgba(201, 168, 106, .35));
   padding: .38em .06em .3em;
-  clip-path: inset(-45% 105% -45% -10%);
+  /* 逐字揭示用透明的裁剪矩形；动画结束后 JS 会清掉 clip-path，避免残留渲染边界 */
+  clip-path: inset(-60% 105% -60% -10%);
   opacity: 0;
 }
 .main-title .ch.written {
   animation: writeIn .38s var(--ease) forwards;
 }
+.main-title .ch.done { clip-path: none; opacity: 1; }
 @keyframes writeIn {
-  from { clip-path: inset(-45% 105% -45% -10%); opacity: 1; transform: translateX(-6px) }
-  to { clip-path: inset(-45% -10% -45% -10%); opacity: 1; transform: none }
+  from { clip-path: inset(-60% 105% -60% -10%); opacity: 1; transform: translateX(-6px) }
+  to { clip-path: inset(-60% -10% -60% -10%); opacity: 1; transform: none }
 }
 .main-title .ch.space { width: .35em; }
 
@@ -168,7 +189,7 @@ a:hover { text-decoration: underline; }
   text-shadow: 0 0 20px rgba(201, 168, 106, .4);
   opacity: 0;
   animation: fadeUp .9s var(--ease) forwards;
-  animation-delay: 2.6s;
+  animation-delay: 1.5s;
 }
 .intro-zh {
   margin-top: 1.2em;
@@ -178,7 +199,7 @@ a:hover { text-decoration: underline; }
   color: rgba(244, 236, 216, .45);
   opacity: 0;
   animation: fadeUp .9s var(--ease) forwards;
-  animation-delay: 2.9s;
+  animation-delay: 1.8s;
 }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px) }
@@ -188,30 +209,32 @@ a:hover { text-decoration: underline; }
 /* 戏票 */
 .ticket {
   margin-top: 5.5vh;
-  display: flex; align-items: stretch;
-  background: linear-gradient(172deg, var(--paper), var(--parch-2));
+  display: inline-flex; align-items: stretch;
   color: var(--ink);
-  border-radius: 6px;
-  box-shadow: 0 14px 44px rgba(0, 0, 0, .7), inset 0 0 40px rgba(138, 116, 74, .15);
   transform: rotate(-1.5deg);
   opacity: 0;
   animation: fadeUp .9s var(--ease) forwards;
-  animation-delay: 3.2s;
-  transition: transform .45s var(--ease), box-shadow .45s var(--ease), opacity .5s;
+  animation-delay: 2.1s;
+  transition: transform .45s var(--ease), filter .45s var(--ease), opacity .5s;
   position: relative;
+  filter: drop-shadow(0 14px 34px rgba(0, 0, 0, .65));
 }
 .ticket:hover {
   transform: rotate(0deg) scale(1.04);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, .75), 0 0 44px rgba(201, 168, 106, .3);
+  filter: drop-shadow(0 20px 44px rgba(0, 0, 0, .7)) drop-shadow(0 0 22px rgba(201, 168, 106, .3));
 }
+/* 主票与副券各自持有纸质背景，副券才能作为一张纸被真正撕下 */
 .t-main {
   display: flex; flex-direction: column; align-items: center;
   gap: .3em;
   padding: 1.1em 1.8em;
+  background: linear-gradient(172deg, var(--paper), var(--parch-2));
+  border-radius: 6px 0 0 6px;
+  box-shadow: inset 0 0 40px rgba(138, 116, 74, .15);
 }
 .t-head {
   font-size: .68rem; letter-spacing: .5em; text-indent: .5em;
-  color: #8a744a; font-weight: 500;
+  color: #8a744a; font-weight: 500; white-space: nowrap;
 }
 .t-show {
   font-family: 'Great Vibes', cursive;
@@ -219,43 +242,52 @@ a:hover { text-decoration: underline; }
 }
 .t-cta {
   font-family: 'Playfair Display', serif; font-style: italic;
-  font-size: .78rem; color: #6d5a33;
+  font-size: .78rem; color: #6d5a33; white-space: nowrap;
 }
 .t-meta {
   margin-top: .5em;
-  font-size: .62rem; letter-spacing: .12em; color: #6d5a33;
+  font-size: .62rem; letter-spacing: .12em; color: #6d5a33; white-space: nowrap;
 }
 .t-meta b { color: #3a2c14; }
 .t-tear {
-  width: 0; align-self: stretch;
-  border-left: 2px dashed rgba(109, 90, 51, .55);
+  width: 3px; align-self: stretch;
+  background: repeating-linear-gradient(to bottom, var(--parch-2) 0 4px, transparent 4px 8px);
   position: relative;
+  z-index: 1;
 }
 .t-tear::before, .t-tear::after {
-  content: ''; position: absolute; left: -7px;
-  width: 12px; height: 12px; border-radius: 50%;
+  content: ''; position: absolute; left: -6px;
+  width: 14px; height: 14px; border-radius: 50%;
   background: var(--coal);
 }
-.t-tear::before { top: -6px; }
-.t-tear::after { bottom: -6px; }
+.t-tear::before { top: -7px; }
+.t-tear::after { bottom: -7px; }
 .t-stub {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: .5em;
-  padding: 0 1.1em;
+  gap: .55em;
+  padding: .9em 1.05em;
+  min-width: 3.1em;
+  background: linear-gradient(172deg, var(--paper), var(--parch-2));
+  border-radius: 0 6px 6px 0;
   transform-origin: left center;
-  transition: transform .7s cubic-bezier(.5, -0.2, .6, 1), opacity .7s;
+  will-change: transform, opacity;
 }
 .t-stub-vert {
   writing-mode: vertical-rl;
-  font-size: .62rem; letter-spacing: .3em; color: #8a744a;
+  font-size: .56rem; letter-spacing: .12em; line-height: 1.05; color: #8a744a;
+  white-space: nowrap;
 }
-.t-no { font-size: .62rem; color: var(--velvet); font-weight: 500; }
+.t-no { font-size: .56rem; color: var(--velvet); font-weight: 500; white-space: nowrap; }
 
-/* 撕票：只撕下右侧票根，主票留到幕布合上 */
+/* 撕票：副券作为一张纸沿撕线脱离、旋转飘落，主票留在原地 */
 .ticket.torn { pointer-events: none; }
 .ticket.torn .t-stub {
-  transform: rotate(26deg) translate(60px, 140px);
-  opacity: 0;
+  animation: tearAway .85s cubic-bezier(.45, -.15, .55, 1) forwards;
+}
+@keyframes tearAway {
+  0%   { transform: rotate(0) translate(0, 0); opacity: 1; }
+  15%  { transform: rotate(-4deg) translate(-6px, 2px); opacity: 1; }
+  100% { transform: rotate(32deg) translate(78px, 170px); opacity: 0; }
 }
 .intro-foot {
   position: absolute; bottom: 4vh;
@@ -264,30 +296,95 @@ a:hover { text-decoration: underline; }
   font-family: 'Noto Sans SC', sans-serif;
   opacity: 0;
   animation: fadeUp .9s var(--ease) forwards;
-  animation-delay: 3.5s;
+  animation-delay: 2.4s;
 }
 
-/* ═══ 幕布转场 ═══════════════════════════ */
-.curtain-overlay { position: fixed; inset: 0; z-index: 60; overflow: hidden; }
-.c-half {
-  position: absolute; top: 0; bottom: 0; width: 50.5%;
-  background-image: url('/assets/art/curtain-cartoon.jpg');
-  background-size: 200% 100%;
-  transition: transform 1.15s cubic-bezier(.7, 0, .25, 1);
+/* ═══ 幕布转场 ═══════════════════════════════════
+   舞台边框与剧场背景同源且全程固定，只有中间两片
+   真实天鹅绒幕布受金绳牵引左右开合 —— 布料自带褶皱
+   与底边金色流苏，与舞台美术一体，不再像两块色板。 */
+.curtain-overlay { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: var(--coal); }
+.c-stage {
+  position: absolute; inset: 0;
+  background: url('/assets/art/stage-cartoon.jpg') center/cover no-repeat;
 }
-.c-left { left: 0; background-position: left center; transform-origin: left; }
-.c-right { right: 0; background-position: right center; transform-origin: right; }
-.curtain-overlay.opening .c-left { transform: translateX(-101%); }
-.curtain-overlay.opening .c-right { transform: translateX(101%); }
-.curtain-overlay.closed-in .c-left,
-.curtain-overlay.closed-in .c-right { transform: translateX(0); }
+/* 台口：两片幕布只在此开口内活动，拱门立柱始终露在外面不动 */
+.c-opening {
+  position: absolute; left: 17.5%; right: 17.5%; top: 20.5%; bottom: 8%;
+  overflow: hidden;
+  box-shadow: inset 0 0 60px rgba(0,0,0,.75), inset 0 18px 30px -18px rgba(0,0,0,.9);
+}
+/* 两片真实幕布：同一张幕布纹理各取一半，合拢时无缝拼成完整幕布 */
+.c-curtain {
+  position: absolute; top: 0; bottom: 0; width: 50.2%;
+  transition: transform 1.35s cubic-bezier(.62, .01, .26, 1);
+  will-change: transform;
+}
+.c-cl { left: 0; }
+.c-cr { right: 0; }
+.c-cloth {
+  position: absolute; top: 0; bottom: 0; width: 200%;
+  background: url('/assets/art/curtain-cloth.jpg') center top / 100% 100% no-repeat;
+  filter: brightness(.92) saturate(1.05);
+}
+/* 左帘取纹理左半，右帘取右半 —— 合拢时拼成完整一张幕布 */
+.c-cl .c-cloth { left: 0; }
+.c-cr .c-cloth { right: 0; }
+/* 帘幕内缘：立体褶皱高光 + 金色滚边，随帘一起移动 */
+.c-edge {
+  position: absolute; top: 0; bottom: 0; width: 5%;
+  pointer-events: none;
+}
+.c-cl .c-edge {
+  right: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(0,0,0,.35) 45%, rgba(201,168,106,.55) 88%, rgba(255,232,176,.25)),
+    repeating-linear-gradient(90deg, transparent 0 5px, rgba(0,0,0,.18) 5px 10px);
+}
+.c-cr .c-edge {
+  left: 0;
+  background:
+    linear-gradient(270deg, transparent, rgba(0,0,0,.35) 45%, rgba(201,168,106,.55) 88%, rgba(255,232,176,.25)),
+    repeating-linear-gradient(90deg, transparent 0 5px, rgba(0,0,0,.18) 5px 10px);
+}
+/* 顶部垂幔流苏：固定在台口上沿，遮住幕布顶缝，强化"挂在上方的幕布"感 */
+.c-valance {
+  position: absolute; left: 0; right: 0; top: 0; height: 15%;
+  background: url('/assets/art/curtain-cloth.jpg') center top / auto 620% no-repeat;
+  background-position: center 0;
+  filter: brightness(.9);
+  clip-path: polygon(0 0, 100% 0, 100% 62%, 92% 78%, 84% 62%, 76% 78%, 68% 62%, 60% 78%, 52% 62%, 44% 78%, 36% 62%, 28% 78%, 20% 62%, 12% 78%, 4% 62%, 0 78%);
+  z-index: 2;
+}
+/* 合拢：两片各就位拼成整幅幕布；拉开：向两侧退去并被挤压（布料堆叠感） */
+.curtain-overlay:not(.opening) .c-cl { transform: translateX(0) scaleX(1); }
+.curtain-overlay:not(.opening) .c-cr { transform: translateX(0) scaleX(1); }
+.curtain-overlay.opening .c-cl { transform: translateX(-92%) scaleX(.82); }
+.curtain-overlay.opening .c-cr { transform: translateX(92%) scaleX(.82); }
+/* 牵引金绳：合拢/拉开时从台口两侧垂下轻摆一下，呼应"绳子拉动" */
+.c-pull {
+  position: absolute; top: 20%; width: 1.1%; height: 46%; z-index: 3;
+  opacity: 0; transition: opacity .35s ease;
+}
+.c-pull span {
+  position: absolute; left: 50%; top: 0; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--gold-hi) 45%, var(--gold) 60%, transparent);
+  transform-origin: top center;
+}
+.curtain-overlay.pulling .c-pull { opacity: .8; }
+.curtain-overlay.pulling .c-pull-l span { animation: pullSwayL 1.3s ease-in-out; }
+.curtain-overlay.pulling .c-pull-r span { animation: pullSwayR 1.3s ease-in-out; }
+@keyframes pullSwayL { 0%,100% { transform: rotate(-3deg) } 45% { transform: rotate(8deg) translateY(3%) } }
+@keyframes pullSwayR { 0%,100% { transform: rotate(3deg) } 45% { transform: rotate(-8deg) translateY(3%) } }
+.c-pull-l { left: 16.4%; }
+.c-pull-r { right: 16.4%; }
 .c-caption {
-  position: absolute; left: 50%; top: 50%;
+  position: absolute; left: 50%; top: 50%; z-index: 4;
   transform: translate(-50%, -50%);
   display: flex; flex-direction: column; align-items: center; gap: 1.2vmin;
   text-align: center;
   opacity: 0; transition: opacity .5s ease;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, .9);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .95), 0 0 26px rgba(0, 0, 0, .9);
 }
 .curtain-overlay.show-caption .c-caption { opacity: 1; }
 .c-act {
@@ -363,37 +460,63 @@ a:hover { text-decoration: underline; }
   font-size: 1.35cqw; color: var(--paper);
 }
 
-/* 金绳拉绳（右侧幕布束绳位置） */
+/* 金绳拉绳：从舞台原图抠出的真实束绳，叠在右侧幕布束绳位置 */
 .rope {
-  position: absolute; right: 8%; top: 33%;
-  width: 7%; height: 26%;
+  position: absolute; right: 5.2%; top: 38%;
+  width: 5.5%; height: 30%;
   z-index: 7;
-  border-radius: 40% 40% 20% 20%;
+  transform-origin: 55% 12%;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, .75));
 }
-.rope::after {
-  content: ''; position: absolute; inset: -8%;
-  border-radius: 999px;
-  border: 1.5px solid rgba(246, 226, 168, 0);
-  transition: all .4s var(--ease);
+.rope-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+/* 边缘微光：解锁后柔和脉冲，锁定态黯淡 */
+.rope-glow {
+  position: absolute; inset: -30% -120%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 45%, rgba(246, 226, 168, .38), rgba(246, 226, 168, .08) 45%, transparent 70%);
+  opacity: .35; pointer-events: none;
+  transition: opacity .4s ease;
 }
-.rope:hover::after {
-  border-color: rgba(246, 226, 168, .55);
-  box-shadow: 0 0 34px rgba(246, 226, 168, .3), inset 0 0 24px rgba(246, 226, 168, .12);
+.rope.ready .rope-glow { opacity: 1; animation: ropePulse 2.4s ease-in-out infinite; }
+@keyframes ropePulse {
+  0%, 100% { opacity: .5; transform: scale(.92) }
+  50% { opacity: 1; transform: scale(1.12) }
 }
+.rope.ready .rope-art { animation: ropeSway 3.6s ease-in-out infinite; transform-origin: top center; }
+@keyframes ropeSway { 0%, 100% { transform: rotate(-2deg) } 50% { transform: rotate(2deg) } }
+.rope:not(.ready) .rope-art { opacity: .55; filter: saturate(.6); }
 .rope-hint {
-  position: absolute; right: 105%; bottom: -4%;
-  width: max-content;
-  font-size: 1.35cqw; color: var(--gold-hi);
-  text-shadow: 0 0 14px rgba(246, 226, 168, .65), 0 2px 8px rgba(0, 0, 0, .9);
-  transform: rotate(2deg);
-  animation: hintSway 4s ease-in-out infinite;
+  position: absolute; right: 118%; top: 44%;
+  width: max-content; max-width: 12cqw;
+  font-size: 1.15cqw; line-height: 1.25; text-align: right;
+  color: var(--gold-hi);
+  text-shadow: 0 0 14px rgba(246, 226, 168, .7), 0 2px 8px rgba(0, 0, 0, .95);
+  pointer-events: none;
 }
-@keyframes hintSway { 0%, 100% { transform: rotate(2deg) } 50% { transform: rotate(-1.5deg) } }
-.rope.pulling { animation: ropePull .5s var(--ease); }
+.rope.ready .rope-hint { animation: hintGlow 2.4s ease-in-out infinite; }
+@keyframes hintGlow { 0%, 100% { opacity: .75 } 50% { opacity: 1 } }
+.rope-lock {
+  display: none;
+  position: absolute; right: 118%; top: 44%;
+  width: max-content; max-width: 12cqw; text-align: right; line-height: 1.3;
+  font-size: .92cqw; color: rgba(240, 217, 168, .85);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .95); pointer-events: none;
+}
+.rope.locked .rope-lock { display: block; }
+.rope.locked .rope-hint { display: none; }
+.rope.pulling .rope-art { animation: ropePull .6s cubic-bezier(.3, .8, .4, 1); }
 @keyframes ropePull {
-  0% { transform: translateY(0) }
-  40% { transform: translateY(3.5%) }
-  100% { transform: translateY(0) }
+  0% { transform: translateY(0) rotate(0) }
+  35% { transform: translateY(9%) rotate(-3deg) }
+  65% { transform: translateY(7%) rotate(2deg) }
+  100% { transform: translateY(0) rotate(0) }
+}
+/* 未解锁时轻晃提示 */
+.rope.nudge .rope-art { animation: ropeNudge .45s ease; }
+@keyframes ropeNudge {
+  0%, 100% { rotate: 0deg }
+  25% { rotate: -6deg }
+  60% { rotate: 5deg }
 }
 
 /* 节目单 */
@@ -435,6 +558,12 @@ a:hover { text-decoration: underline; }
 }
 .pb-list li.seen .stamp { opacity: .85; transform: rotate(-8deg) scale(1); }
 .pb-list li.now button { color: var(--velvet); font-weight: 700; }
+.pb-list li.now button::before {
+  content: ''; position: absolute; left: -.4cqw; top: 15%; bottom: 15%;
+  width: 2px; background: var(--velvet); border-radius: 2px;
+  box-shadow: 0 0 8px rgba(160, 24, 48, .6);
+}
+.pb-list button { position: relative; }
 
 /* ═══ 各幕通用 ═══════════════════════════ */
 .actscene { position: absolute; inset: 0; animation: sceneIn .9s var(--ease); }
@@ -443,7 +572,7 @@ a:hover { text-decoration: underline; }
 /* ═══ 第一幕 · 剧评人的图书馆 ═════════════ */
 /* 字幕屏（左侧木墙竖条） */
 .subtitle-screen {
-  position: absolute; left: 20.5%; top: 27%;
+  position: absolute; left: 20.5%; top: 25%;
   width: 11%; z-index: 4;
   padding: 1cqw .7cqw;
   background: linear-gradient(175deg, #2a1d10, #190f08);
@@ -452,6 +581,59 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 12px 30px rgba(0, 0, 0, .7), inset 0 0 30px rgba(0, 0, 0, .6);
   display: flex; justify-content: center; gap: .55cqw;
   min-height: 38%;
+}
+/* 竖版「剧评人手记」：头像 + 文艺简介 */
+.subtitle-screen.is-profile {
+  flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: .5cqw; padding: 1cqw .8cqw 1.3cqw;
+  height: 66%; min-height: 0; top: 18%;
+  background: linear-gradient(175deg, #2c1f12, #170e07 70%);
+  border-color: rgba(201, 168, 106, .5);
+  overflow: hidden;
+}
+.sp-frame {
+  width: 5.6cqw; height: 5.6cqw; flex: none;
+  padding: .3cqw;
+  background: linear-gradient(145deg, #c9a86a, #6d5222 45%, #e0c882 70%, #7a5c26);
+  border-radius: 2px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 235, 180, .4);
+  position: relative;
+}
+.sp-frame::after {
+  content: ''; position: absolute; inset: .16cqw;
+  border: 1px solid rgba(28, 18, 8, .8); pointer-events: none;
+}
+.sp-photo { width: 100%; height: 100%; overflow: hidden; border-radius: 1px; }
+.sp-photo svg { width: 100%; height: 100%; display: block; }
+.sp-handle {
+  font-family: 'Caveat', 'Noto Serif SC', cursive;
+  font-size: 1.05cqw; color: var(--gold-hi);
+  letter-spacing: .04em; line-height: 1.15; text-align: center;
+  text-shadow: 0 0 10px rgba(246, 226, 168, .35);
+}
+.sp-rule {
+  width: 60%; height: 1px; flex: none;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: .7;
+}
+.sp-verses {
+  writing-mode: vertical-rl; text-orientation: upright;
+  display: flex; flex-direction: column; gap: .45cqw; align-items: flex-start;
+  font-family: 'Noto Serif SC', serif;
+  font-size: .82cqw; line-height: 1.5; letter-spacing: .1em;
+  color: #f0d9a8;
+  flex: none; min-height: 0;
+  text-shadow: 0 0 10px rgba(255, 190, 110, .35);
+}
+.sp-verses span { white-space: nowrap; }
+.sp-verses span:nth-child(2) { color: var(--gold-hi); }
+.sp-topics {
+  writing-mode: vertical-rl; text-orientation: upright;
+  font-family: 'Noto Serif SC', serif;
+  font-size: .58cqw; letter-spacing: .14em;
+  color: rgba(201, 168, 106, .75);
+  border-left: 1px dashed rgba(138, 116, 74, .5);
+  padding-left: .3cqw; flex: none;
 }
 .sub-col {
   writing-mode: vertical-rl;
@@ -477,6 +659,7 @@ a:hover { text-decoration: underline; }
   transition: all .35s var(--ease);
 }
 a.sub-link:hover { background: rgba(201, 168, 106, .25); text-decoration: none; }
+.subtitle-screen.is-profile .sub-link { bottom: -2.4cqw; font-size: .64cqw; }
 
 /* 漂浮羊皮卷 */
 .parch-zone { position: absolute; inset: 0; z-index: 4; }
@@ -512,6 +695,25 @@ a.sub-link:hover { background: rgba(201, 168, 106, .25); text-decoration: none; 
   display: grid; place-items: center;
   color: rgba(255, 220, 180, .9); font-size: .8cqw;
   font-family: 'Playfair Display', serif; font-style: italic;
+}
+/* 抖音合集引言卡：完整文案可读 + 点击展开题跋 */
+.parchment.quote-card {
+  padding: 1cqw 1.1cqw 1cqw;
+  display: flex; flex-direction: column; align-items: center; gap: .4cqw;
+  cursor: pointer;
+}
+.parchment .p-quote {
+  display: block; width: 100%;
+  font-family: 'Noto Serif SC', serif;
+  font-size: .8cqw; line-height: 1.6; color: #3a2f1d;
+  text-align: center; letter-spacing: .03em;
+}
+.parchment .p-quote-cta {
+  display: block;
+  font-family: 'Caveat', cursive; font-size: .9cqw;
+  color: var(--velvet); letter-spacing: .04em;
+  border-top: 1px solid rgba(138, 116, 74, .4);
+  padding-top: .3cqw; margin-top: .1cqw;
 }
 .parchment:hover {
   transform: translateY(-6%) scale(1.07) rotate(0deg) !important;
@@ -985,6 +1187,23 @@ a.sub-link:hover { background: rgba(201, 168, 106, .25); text-decoration: none; 
   /* 横滑卡片条 */
   .mb-scroll { display: flex; gap: .8rem; overflow-x: auto; padding: .3rem .1rem 1rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
   .mb-scroll::-webkit-scrollbar { display: none; }
+  .mb-xhs-intro {
+    display: flex; gap: .85rem; align-items: flex-start;
+    background: linear-gradient(160deg, rgba(201, 168, 106, .12), rgba(0,0,0,.2));
+    border: 1px solid rgba(201, 168, 106, .35); border-radius: 8px;
+    padding: .9rem; margin: .2rem 0 .8rem;
+  }
+  .mb-xhs-badge {
+    flex: none; width: 3.2rem; height: 3.2rem; border-radius: 4px;
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, #c9a86a, #6d5222 55%, #e0c882);
+    box-shadow: inset 0 0 0 2px rgba(28,18,8,.7), 0 4px 12px rgba(0,0,0,.5);
+    font-family: Georgia, serif; font-style: italic; font-size: 1.9rem; color: #2a1c0c;
+  }
+  .mb-xhs-intro h4 { font-family: 'Noto Serif SC', serif; font-size: .95rem; color: #f6e2a8; margin-bottom: .15rem; }
+  .mb-xhs-role { font-size: .72rem; color: rgba(244,236,216,.65); margin-bottom: .4rem; }
+  .mb-xhs-intro p { font-size: .78rem; line-height: 1.6; color: #f0d9a8; }
+  .mb-xhs-intro .mb-cat { display: block; margin-top: .45rem; }
   .mb-strip {
     display: block; font-size: .78rem; letter-spacing: .08em;
     color: #f6e2a8; border: 1px solid rgba(201, 168, 106, .4); border-radius: 999px;
