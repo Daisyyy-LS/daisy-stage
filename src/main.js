@@ -1,5 +1,5 @@
 import './style.css';
-import { profile, xhsNotes, xhsStats, douyin, cctvWorks, xProfile, coaligne, tweets, repos } from './data.js';
+import { profile, acts, xhsNotes, xhsStats, douyin, cctvWorks, xProfile, coaligne, tweets, repos } from './data.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -7,15 +7,21 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.random() * (b - a);
 const isFine = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+// 让非 button 元素（羊皮卷/信封/画框等 div）也支持键盘激活
+function onActivate(el, handler) {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.addEventListener('click', handler);
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(e); }
+  });
+}
+
 const seen = new Set();
 let actIndex = -1; // 当前幕
+let sceneTimer = null; // 第一幕场景切换定时器（切幕时需清除）
 
-const ACTS = [
-  { el: '#act-library', num: 'Act I', title: "The Critic's Library", zh: '剧评人的图书馆', pb: 'The Library · 剧评与舞' },
-  { el: '#act-onair', num: 'Act II', title: 'Now Showing', zh: '央视放映厅', pb: 'Now Showing · 央视' },
-  { el: '#act-post', num: 'Act III', title: 'Owl Post', zh: '猫头鹰邮报', pb: 'Owl Post · 掌心' },
-  { el: '#act-finale', num: 'Curtain Call', title: 'Curtain Call', zh: '谢幕', pb: 'Curtain Call · 谢幕' }
-];
+const ACTS = acts; // 幕信息统一来自 data.js，改幕名只改一处
 
 /* ═══ 魔法棒光标 + 金粉轨迹 ═══════════════ */
 if (isFine) {
@@ -124,30 +130,36 @@ function curtainSet(state) {
 async function curtainCycle(caption, midway) {
   if (overlayBusy) return;
   overlayBusy = true;
-  // 1. 幕布合拢（瞬间覆盖 → 滑入）
-  $('#cAct').textContent = caption[0];
-  $('#cTitle').textContent = caption[1];
-  $('#cZh').textContent = caption[2] || '';
-  overlay.hidden = false;
-  overlay.classList.remove('opening', 'show-caption');
-  const halves = $$('.c-half');
-  halves.forEach((h) => { h.style.transition = 'none'; h.style.transform = ''; });
-  overlay.classList.add('opening'); // 先处于拉开状态（屏幕外）
-  await sleep(30);
-  halves.forEach((h) => { h.style.transition = ''; h.style.transform = ''; });
-  overlay.classList.remove('opening'); // 滑回合拢
-  await sleep(1150);
-  overlay.classList.add('show-caption');
-  await sleep(1000);
-  midway && midway();
-  await sleep(350);
-  // 2. 拉开
-  overlay.classList.remove('show-caption');
-  overlay.classList.add('opening');
-  await sleep(1250);
-  overlay.hidden = true;
-  overlay.classList.remove('opening');
-  overlayBusy = false;
+  try {
+    // 1. 幕布合拢（瞬间覆盖 → 滑入）
+    $('#cAct').textContent = caption[0];
+    $('#cTitle').textContent = caption[1];
+    $('#cZh').textContent = caption[2] || '';
+    overlay.hidden = false;
+    overlay.classList.remove('opening', 'show-caption');
+    const halves = $$('.c-half');
+    halves.forEach((h) => { h.style.transition = 'none'; h.style.transform = ''; });
+    overlay.classList.add('opening'); // 先处于拉开状态（屏幕外）
+    await sleep(30);
+    halves.forEach((h) => { h.style.transition = ''; h.style.transform = ''; });
+    overlay.classList.remove('opening'); // 滑回合拢
+    await sleep(1150);
+    overlay.classList.add('show-caption');
+    await sleep(1000);
+    midway && midway();
+    await sleep(350);
+    // 2. 拉开
+    overlay.classList.remove('show-caption');
+    overlay.classList.add('opening');
+    await sleep(1250);
+    overlay.hidden = true;
+    overlay.classList.remove('opening');
+  } finally {
+    // 中途任一步抛错也要收起幕布并解锁，否则 overlayBusy 永久为 true，整页无法再交互
+    overlay.hidden = true;
+    overlay.classList.remove('opening', 'show-caption');
+    overlayBusy = false;
+  }
 }
 
 $('#ticket').addEventListener('click', async () => {
@@ -157,7 +169,7 @@ $('#ticket').addEventListener('click', async () => {
   await sleep(650);
   const theater = $('#theater');
   theater.hidden = false;
-  switchAct(0, true); // 直接铺好第一幕
+  switchAct(0); // 直接铺好第一幕
   await curtainCycle(['Tonight', "Daisy's Stage", '演出开始'], null);
   $('#intro').classList.add('away');
 });
@@ -172,13 +184,16 @@ if (isFine) {
     ty = (e.clientY / innerHeight - 0.5) * 2;
   }, { passive: true });
   (function loop() {
-    cx += (tx - cx) * 0.055;
-    cy += (ty - cy) * 0.055;
-    for (const l of layers) {
-      const d = parseFloat(l.dataset.depth || 1);
-      const back = l.classList.contains('l-proscenium') ? 1 : -1;
-      const sc = l.classList.contains('l-backdrop') ? 1.06 : l.classList.contains('l-proscenium') ? 1.03 : 1;
-      l.style.transform = `translate3d(${cx * d * 14 * back}px, ${cy * d * 8 * back}px, 0) scale(${sc})`;
+    // 页面不可见或还在首屏时不做无谓的变换计算
+    if (!document.hidden && !$('#theater').hidden) {
+      cx += (tx - cx) * 0.055;
+      cy += (ty - cy) * 0.055;
+      for (const l of layers) {
+        const d = parseFloat(l.dataset.depth || 1);
+        const back = l.classList.contains('l-proscenium') ? 1 : -1;
+        const sc = l.classList.contains('l-backdrop') ? 1.06 : l.classList.contains('l-proscenium') ? 1.03 : 1;
+        l.style.transform = `translate3d(${cx * d * 14 * back}px, ${cy * d * 8 * back}px, 0) scale(${sc})`;
+      }
     }
     requestAnimationFrame(loop);
   })();
@@ -204,7 +219,7 @@ if (isFine) {
 const pbList = $('#pbList');
 ACTS.forEach((a, i) => {
   const li = document.createElement('li');
-  li.innerHTML = `<button><span class="pnum">${['I', 'II', 'III', 'IV'][i]}.</span><span>${a.pb}</span><span class="stamp">已检</span></button>`;
+  li.innerHTML = `<button><span class="pnum">${a.numeral}.</span><span>${a.pb}</span><span class="stamp">已检</span></button>`;
   li.querySelector('button').addEventListener('click', () => goAct(i));
   pbList.appendChild(li);
 });
@@ -216,7 +231,9 @@ function syncPlaybill() {
 }
 
 /* ═══ 幕切换 ═══════════════════════════ */
-function switchAct(i, instant) {
+function switchAct(i) {
+  // 离开第一幕时取消尚未落地的场景切换定时器，防止回到剧场后渲染错乱
+  if (i !== 0) clearTimeout(sceneTimer);
   ACTS.forEach((a, k) => { $(a.el).hidden = k !== i; });
   actIndex = i;
   const a = ACTS[i];
@@ -265,6 +282,18 @@ const FRAME_POS = [
   { l: 29, t: 26, r: -2 }, { l: 44.5, t: 28, r: 1.5 }, { l: 60, t: 26, r: 2 }
 ];
 
+// 取第 k 个坐标：预设不够时在舞台安全区内按网格补位，避免取模回绕导致卡片重叠。
+// 补位意味着 data.js 的数据条数超出了预设坐标，建议同步扩充对应坐标数组。
+function posAt(positions, k, label) {
+  if (k < positions.length) return positions[k];
+  if (k === positions.length) {
+    console.warn(`[daisy-stage] ${label} 的数据多于预设坐标，已自动补位。请扩充坐标数组以保持排版。`);
+  }
+  const extra = k - positions.length;
+  const col = extra % 4, row = Math.floor(extra / 4);
+  return { l: 30 + col * 12, t: 26 + row * 22, r: (k % 2 ? 1 : -1) * 2 };
+}
+
 function subtitleCols(scene) {
   if (scene.screen === 'douyin') {
     return {
@@ -294,9 +323,13 @@ function buildLibrary() {
 }
 
 function switchScene(dir) {
+  // 立即累加目标（连续点击可正确跳多场），并清掉上一次未落地的定时器，避免竞态
+  const target = (sceneIndex + dir + SCENES.length) % SCENES.length;
+  sceneIndex = target;
   const zone = $('#parchZone');
   $$('.parchment, .goldframe', zone).forEach((el) => el.classList.add('flyout'));
-  setTimeout(() => renderScene((sceneIndex + dir + SCENES.length) % SCENES.length), 420);
+  clearTimeout(sceneTimer);
+  sceneTimer = setTimeout(() => renderScene(target), 420);
 }
 
 function renderScene(i, first) {
@@ -313,14 +346,14 @@ function renderScene(i, first) {
   zone.innerHTML = '';
   if (scene.key === 'dance') {
     douyin.videos.forEach((v, k) => {
-      const p = FRAME_POS[k];
+      const p = posAt(FRAME_POS, k, '抖音视频');
       const el = document.createElement('div');
       el.className = 'goldframe';
       el.style.left = p.l + '%'; el.style.top = p.t + '%';
       el.style.transform = `rotate(${p.r}deg)`;
       el.style.animationDelay = `${-k * 2.4}s`;
       el.innerHTML = `<div class="gf-inner"><img src="assets/theater/${v.id}.jpg" alt="${v.title}" loading="lazy" /></div><div class="gf-plate">${v.ep} · ♥ ${v.likes}</div>`;
-      el.addEventListener('click', () => openModal(`
+      onActivate(el, () => openModal(`
         <span class="mc-no"><span>Side Stage · 侧台之舞</span><span>抖音 · ${v.ep}</span></span>
         <h3 class="mc-title">${v.title}</h3>
         <p class="mc-excerpt">合集「${douyin.collection.name}」· ${douyin.collection.episodes} 集 · ${douyin.collection.plays} 播放\n「${douyin.description}」</p>
@@ -339,7 +372,7 @@ function renderScene(i, first) {
     const notes = xhsNotes.filter((n) => scene.cats.includes(n.cat));
     const positions = scene.key === 'reviews' ? PARCH_POS_1 : PARCH_POS_2;
     notes.forEach((n, k) => {
-      const p = positions[k % positions.length];
+      const p = posAt(positions, k, '小红书笔记');
       const el = document.createElement('div');
       el.className = 'parchment' + (first ? ' flyin' : '');
       el.style.left = p.l + '%'; el.style.top = p.t + '%';
@@ -351,7 +384,7 @@ function renderScene(i, first) {
         <span class="p-title">${n.title}</span>`;
       el.addEventListener('mouseenter', () => { zone.classList.add('spot'); el.classList.add('lit'); });
       el.addEventListener('mouseleave', () => { zone.classList.remove('spot'); el.classList.remove('lit'); });
-      el.addEventListener('click', () => openModal(`
+      onActivate(el, () => openModal(`
         <span class="mc-no"><span>Programme No.${String(xhsNotes.indexOf(n) + 1).padStart(3, '0')}</span><span>${n.cat}</span></span>
         <h3 class="mc-title">${n.title}</h3>
         <p class="mc-excerpt">${n.excerpt}</p>
@@ -375,7 +408,7 @@ function buildOnair() {
     const f = document.createElement('div');
     f.className = 'fframe' + (i === 0 ? ' now' : '');
     f.innerHTML = `<img src="assets/tv/${w.id}.jpg" alt="${w.title}" loading="lazy" /><span class="f-no">S${i + 1}</span>`;
-    f.addEventListener('click', () => selectWork(i));
+    onActivate(f, () => selectWork(i));
     strip.appendChild(f);
   });
   renderClapper(0);
@@ -422,14 +455,14 @@ function buildPost() {
       </div>
     </div>`;
 
-  $('#profileCard').addEventListener('click', () => openModal(`
+  onActivate($('#profileCard'), () => openModal(`
     <span class="mc-no"><span>The Witch's File</span><span>X · 主页</span></span>
     <h3 class="mc-title">${xProfile.name} · ${xProfile.handle}</h3>
     <p class="mc-excerpt">${xProfile.bio}</p>
     <div class="mc-meta"><span>${xProfile.followers} followers</span><span>${xProfile.posts} posts</span></div>
     <a class="mc-link" href="${xProfile.url}" target="_blank" rel="noopener"><span>View on X ↗</span></a>`));
 
-  $('#magicPhoto').addEventListener('click', () => openModal(`
+  onActivate($('#magicPhoto'), () => openModal(`
     <span class="mc-no"><span>Moving Photograph</span><span>AI 视频</span></span>
     <video src="assets/video/concept-film.mp4" controls autoplay playsinline></video>
     <h3 class="mc-title">风格化 AI 产品概念片</h3>
@@ -438,14 +471,14 @@ function buildPost() {
 
   // 4 条推文 → 信封
   tweets.forEach((t, k) => {
-    const p = ENV_POS[k];
+    const p = posAt(ENV_POS, k, '推文信封');
     const el = document.createElement('div');
     el.className = 'env';
     el.style.left = p.l + '%'; el.style.top = p.t + '%';
     el.style.transform = `rotate(${p.r}deg)`;
     el.style.animationDelay = `${-k * 2.1}s`;
     el.innerHTML = `<span class="e-seal">D</span><div class="e-type">${t.type}</div><div class="e-text">${t.text}</div>`;
-    el.addEventListener('click', () => openModal(`
+    onActivate(el, () => openModal(`
       <span class="mc-no"><span>Owl Post · 猫头鹰邮报</span><span>${t.date}</span></span>
       <h3 class="mc-title" style="font-size:1.05rem">${t.text}</h3>
       ${t.video ? '' : `<img src="assets/phone/${t.id}.png" alt="" style="width:100%;border-radius:4px;margin-bottom:1rem" />`}
@@ -461,7 +494,7 @@ function buildPost() {
   co.style.left = '21%'; co.style.top = '66%'; co.style.transform = 'rotate(-1.5deg)';
   co.style.animationDelay = '-3.2s';
   co.innerHTML = `<span class="e-seal" style="background:radial-gradient(circle at 35% 30%, #4a7fbf, #173356)">C</span><div class="e-type">📌 Pinned · Product</div><div class="e-text">${coaligne.title} — ${coaligne.desc}</div>`;
-  co.addEventListener('click', () => openModal(`
+  onActivate(co, () => openModal(`
     <span class="mc-no"><span>Pinned · Product</span><span>coaligne.com</span></span>
     <h3 class="mc-title">${coaligne.title}</h3>
     <p class="mc-excerpt">${coaligne.desc}。在这里，团队成员和 AI Agent 共享同一份项目上下文。</p>
@@ -475,7 +508,7 @@ function buildPost() {
   rp.style.left = '64%'; rp.style.top = '66%'; rp.style.transform = 'rotate(2deg)';
   rp.style.animationDelay = '-5s';
   rp.innerHTML = `<span class="e-seal" style="background:radial-gradient(circle at 35% 30%, #4a7fbf, #173356)">G</span><div class="e-type">📌 AI 实践 · GitHub</div><div class="e-text">${repos.map((r) => r.name).join(' · ')}</div>`;
-  rp.addEventListener('click', () => openModal(`
+  onActivate(rp, () => openModal(`
     <span class="mc-no"><span>Pinned · AI 实践</span><span>GitHub</span></span>
     <h3 class="mc-title">一些小的 AI 实践</h3>
     ${repos.map((r) => `
@@ -501,19 +534,37 @@ function buildFinale() {
 }
 
 /* ═══ 弹层 ═══════════════════════════════ */
+let lastFocused = null; // 打开弹层前的焦点，关闭后归还
 function openModal(inner) {
+  const modal = $('#modal');
+  lastFocused = document.activeElement;
   $('#modalCard').innerHTML = `<button class="mc-close" aria-label="关闭">×</button>` + inner;
-  $('#modal').hidden = false;
+  modal.hidden = false;
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  $('.mc-close', $('#modalCard')).focus();
 }
 function closeModal() {
-  $('#modal').hidden = true;
+  const modal = $('#modal');
+  modal.hidden = true;
   $$('#modalCard video').forEach((v) => v.pause());
+  if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
 }
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-modal-close]') || e.target.closest('.mc-close')) closeModal();
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !$('#modal').hidden) closeModal();
+  const modal = $('#modal');
+  if (modal.hidden) return;
+  if (e.key === 'Escape') { closeModal(); return; }
+  if (e.key === 'Tab') {
+    // 焦点陷阱：Tab / Shift+Tab 在弹层内循环，避免焦点跑到被遮住的舞台元素上
+    const f = $$('a[href], button:not([disabled]), video[controls], [tabindex]:not([tabindex="-1"])', $('#modalCard'));
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 });
 
 /* ═══ 移动端竖屏版 ═══════════════════════ */
